@@ -9,61 +9,21 @@ public class Runner {
     // JDBC driver name and database URL
     static final String JDBC_DRIVER = "org.h2.Driver";
     static final String DB_URL = "jdbc:h2:~/liquibase";
-
     //  Database credentials
     static final String USER = "liquibase";
     static final String PASS = "";
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ClassNotFoundException {
         System.out.println("=====================Hello!=======================");
-        Connection connection = null;
-        Statement statement = null;
-        try {
-            Class.forName(JDBC_DRIVER);
-            connection = DriverManager.getConnection(DB_URL, USER, PASS);
-            statement = connection.createStatement();
-            String sql = "SELECT * FROM DATABASECHANGELOG";
-            ResultSet rs = statement.executeQuery(sql);
+        Class.forName(JDBC_DRIVER);
+        try (Connection connection = DriverManager.getConnection(DB_URL, USER, PASS);
+             Statement statement = connection.createStatement()) {
 
-//            printTableColumns(connection, "PERSON");
+            printTableData(connection, "DATABASECHANGELOG");
+            printTableData(connection, "PERSON");
 
-            System.out.println("Changeset list:");
-            while (rs.next()) {
-                System.out.print("ID:" + rs.getString("ID") + ", ");
-                System.out.print("AUTHOR:" + rs.getString("AUTHOR") + ", ");
-                System.out.print("FILENAME:" + rs.getString("FILENAME") + ", ");
-                System.out.print("COMMENTS:" + rs.getString("COMMENTS") + "\n");
-            }
-
-            sql = "SELECT * FROM PERSON";
-            rs = statement.executeQuery(sql);
-            System.out.println("Persons table:");
-            while (rs.next()) {
-                System.out.print("ID:" + rs.getString("ID") + ", ");
-                System.out.print("FIRSTNAME:" + rs.getString("FIRSTNAME") + ", ");
-                System.out.print("LASTNAME:" + rs.getString("LASTNAME") + ", ");
-                System.out.print("USERNAME:" + rs.getString("USERNAME") + ", ");
-                System.out.print("NICKNAME:" + rs.getString("NICKNAME") + "\n");
-            }
-            rs.close();
-            statement.close();
-            connection.close();
-        } catch (SQLException se) {
-            se.printStackTrace();
-        } catch (Exception e) {
+        } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            try {
-                if (statement != null)
-                    statement.close();
-            } catch (SQLException se2) {
-            }
-            try {
-                if (connection != null)
-                    connection.close();
-            } catch (SQLException se) {
-                se.printStackTrace();
-            }
         }
         System.out.println("=====================Bye!=======================");
     }
@@ -72,11 +32,26 @@ public class Runner {
         DatabaseMetaData databaseMetaData = connection.getMetaData();
 
         ResultSet result = databaseMetaData.getColumns(
-                null , null, tableNamePattern.toUpperCase(), null);
+                null, null, tableNamePattern.toUpperCase(), null);
 
         while (result.next()) {
             String columnName = result.getString("COLUMN_NAME");
             System.out.println("Column name:" + columnName);
         }
+    }
+
+    private static void printTableData(Connection connection, String tableName) throws SQLException {
+        //todo remove throws or change structure
+        System.out.println("Table name:" + tableName);
+        DatabaseMetaData databaseMetaData = connection.getMetaData();
+        ResultSet result = databaseMetaData.getColumns(null, null, tableName.toUpperCase(), null);
+        Statement statement = connection.createStatement();
+        //TODO remove sql injection
+        String sql = "SELECT * FROM " + tableName + ";";
+        ResultSet tableResultSet = statement.executeQuery(sql);
+//        while (result.next()) {
+//            System.out.println(String.format("Column %s: %s ", result.getString("COLUMN_NAME"),
+//                    tableResultSet.getString(result.getString("COLUMN_NAME"))));
+//        }
     }
 }
