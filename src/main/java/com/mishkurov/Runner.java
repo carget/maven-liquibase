@@ -33,12 +33,16 @@ public class Runner {
         ResultSet columns = databaseMetaData.getColumns(null, null, tableName.toUpperCase(), null);
         try (Statement statement = connection.createStatement()){
             String sql = "SELECT * FROM " + tableName + ";";
-            ResultSet tables = statement.executeQuery(sql);
-            while (tables.next()) {
-                while (columns.next()) {
-                    System.out.println(String.format("Column %s: %s ", columns.getString("COLUMN_NAME"),
-                            tables.getString(columns.getString("COLUMN_NAME"))));
-                }
+            ResultSet table = statement.executeQuery(sql);
+            printValuesForEachColumnsInTable(table, columns);
+        }
+    }
+
+    private static void printValuesForEachColumnsInTable(ResultSet table, ResultSet columns) throws SQLException {
+        while (table.next()) {
+            while (columns.next()) {
+                System.out.println(String.format("Column %s: %s ", columns.getString("COLUMN_NAME"),
+                        table.getString(columns.getString("COLUMN_NAME"))));
             }
         }
     }
